@@ -1,5 +1,6 @@
 // tailwind.config.js
-export default {
+/** @type {import('tailwindcss').Config} */
+export default { // Usa export default {} aquí
   content: [
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",

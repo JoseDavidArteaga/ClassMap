@@ -4,31 +4,34 @@ import { materias } from '../data/materiasMock';
 const diasSemana = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
 const horas = Array.from({ length: 17 }, (_, i) => i + 6); // 6:00 a 22:00
 
-// Asignar un color diferente a cada materia
-const materiaColores = [
-  'bg-blue-200',
-  'bg-green-200',
-  'bg-yellow-200',
-  'bg-purple-200',
-  'bg-pink-200',
-  'bg-red-200',
-  'bg-indigo-200',
-];
-
-// Mapea ID de materia a color para consistencia
-const colorPorMateria: Record<string, string> = {};
-materias.forEach((m, i) => {
-  colorPorMateria[m.id] = materiaColores[i % materiaColores.length];
-});
-
 function formatoHora(hora: number) {
   return `${hora.toString().padStart(2, '0')}:00`;
 }
 
-// Evita que se repita el bloque cuando ocupa varias celdas
 function materiaEmpiezaEnHora(materia: any, hora: number) {
   return parseInt(materia.horaInicio.split(':')[0]) === hora;
 }
+
+// 🔵 Aquí declaramos explícitamente las clases
+const clasesColor = [
+  'bg-blue-300',
+  'bg-green-300',
+  'bg-yellow-300',
+  'bg-purple-300',
+  'bg-pink-300',
+  'bg-red-300',
+  'bg-indigo-300',
+  'bg-orange-300',
+  'bg-emerald-300',
+  'bg-teal-300',
+  'bg-rose-300',
+];
+
+// 🔁 Generamos un mapeo estático entre id de materia y clase
+const colorPorMateria: Record<string, string> = {};
+materias.forEach((m, index) => {
+  colorPorMateria[m.id] = clasesColor[index % clasesColor.length];
+});
 
 export function ScheduleGrid() {
   return (
@@ -57,23 +60,23 @@ export function ScheduleGrid() {
                   parseInt(m.horaFin.split(':')[0]) > hora
                 );
 
-                // Si no hay materia, celda vacía
                 if (!materia) {
                   return <td key={dia + hora} className="border border-gray-200 h-16"></td>;
                 }
 
-                // Si ya fue renderizada en una fila anterior (parte de un rowspan), omitimos esta celda
                 if (!materiaEmpiezaEnHora(materia, hora)) return null;
 
                 const horaInicio = parseInt(materia.horaInicio.split(':')[0]);
                 const horaFin = parseInt(materia.horaFin.split(':')[0]);
                 const duracion = horaFin - horaInicio;
 
+                const claseFondo = colorPorMateria[materia.id];
+
                 return (
                   <td
                     key={dia + hora}
                     rowSpan={duracion}
-                    className={`border text-sm text-center align-top px-2 py-1 ${colorPorMateria[materia.id]} font-medium`}
+                    className={`border text-sm text-center align-top px-2 py-1 font-medium ${claseFondo}`}
                   >
                     <div>{materia.nombre}</div>
                     <div className="text-xs text-gray-700">{materia.salon}</div>
