@@ -1,0 +1,14 @@
+# Ignorar archivos del sistema
+desktop.ini
+Thumbs.db
+
+# Node/Vite/React
+node_modules/
+dist/
+.env
+.env.local
+
+# IDEs y editores
+.vscode/
+.idea/
+*.log
