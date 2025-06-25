@@ -1,85 +1,129 @@
 // src/components/ScheduleGrid.tsx
-import { materias } from '../data/materiasMock';
+import { type Materia, type Sesion, materiasMock } from '../data/materiasMock';
 
+// Lista de días de la semana, que serán utilizados como cabeceras de las columnas en la tabla
 const diasSemana = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+
+// Lista de horas del día (de 6:00 a 22:00)
 const horas = Array.from({ length: 17 }, (_, i) => i + 6); // 6:00 a 22:00
 
-function formatoHora(hora: number) {
-  return `${hora.toString().padStart(2, '0')}:00`;
-}
-
-function materiaEmpiezaEnHora(materia: any, hora: number) {
-  return parseInt(materia.horaInicio.split(':')[0]) === hora;
-}
-
-// 🔵 Aquí declaramos explícitamente las clases
-const clasesColor = [
-  'bg-blue-300',
-  'bg-green-300',
-  'bg-yellow-300',
-  'bg-purple-300',
-  'bg-pink-300',
-  'bg-red-300',
-  'bg-indigo-300',
-  'bg-orange-300',
-  'bg-emerald-300',
-  'bg-teal-300',
-  'bg-rose-300',
+// Lista de colores asignados a las materias para diferenciarlas visualmente
+const colores = [
+  'bg-blue-300 text-blue-900',
+  'bg-green-300 text-green-900',
+  'bg-yellow-300 text-yellow-900',
+  'bg-purple-300 text-purple-900',
+  'bg-pink-300 text-pink-900',
+  'bg-red-300 text-red-900',
+  'bg-indigo-300 text-indigo-900',
+  'bg-orange-300 text-orange-900',
+  'bg-emerald-300 text-emerald-900',
+  'bg-teal-300 text-teal-900',
+  'bg-cyan-300 text-cyan-900',
+  'bg-lime-300 text-lime-900',
+  'bg-rose-300 text-rose-900',
+  'bg-violet-300 text-violet-900',
+  'bg-fuchsia-300 text-fuchsia-900',
+  'bg-gray-300 text-gray-900',
+  'bg-sky-300 text-sky-900',
+  'bg-stone-300 text-stone-900',
+  'bg-amber-300 text-amber-900',
 ];
 
-// 🔁 Generamos un mapeo estático entre id de materia y clase
-const colorPorMateria: Record<string, string> = {};
-materias.forEach((m, index) => {
-  colorPorMateria[m.id] = clasesColor[index % clasesColor.length];
+
+// Objeto que almacena el color asignado a cada materia según su código
+const colorPorCodigo: Record<string, string> = {};
+let colorIndex = 0;
+
+// Asignación de un color único a cada materia
+materiasMock.forEach((materia) => {
+  // Si aún no se ha asignado color a esta materia, lo hacemos con el siguiente color de la lista
+  if (!colorPorCodigo[materia.codigo]) {
+    colorPorCodigo[materia.codigo] = colores[colorIndex % colores.length];
+    colorIndex++;
+  }
 });
 
+// Función que da formato a la hora (de 6 a 22) en el formato "HH:00"
+function formatoHora(h: number) {
+  return `${h.toString().padStart(2, '0')}:00`;
+}
+
+// Componente principal que renderiza la tabla con el horario
 export function ScheduleGrid() {
+  // Conjunto que mantiene las celdas ocupadas para evitar que se superpongan las clases
+  const celdasOcupadas = new Set<string>();
+
   return (
-    <div className="overflow-x-auto">
-      <table className="table-fixed border-collapse w-full">
+    <div className="overflow-x-auto p-4 bg-gray-50 min-h-screen">
+      {/* Tabla que muestra el horario */}
+      <table className="table-fixed border-collapse w-full bg-white shadow rounded">
         <thead>
           <tr>
-            <th className="w-20 border border-gray-300 bg-gray-100"></th>
+            {/* Columna vacía para las horas */}
+            <th className="w-20 bg-gray-100 border p-2"></th>
+            {/* Cabecera con los días de la semana */}
             {diasSemana.map((dia) => (
-              <th key={dia} className="border border-gray-300 bg-gray-100 px-2 py-1 text-sm">
-                {dia}
-              </th>
+              <th key={dia} className="bg-gray-100 border p-2 text-sm font-medium">{dia}</th>
             ))}
           </tr>
         </thead>
         <tbody>
+          {/* Filas de la tabla para cada hora */}
           {horas.map((hora) => (
             <tr key={hora}>
-              <td className="border border-gray-300 bg-gray-50 text-xs text-center">
-                {formatoHora(hora)}
-              </td>
+              {/* Columna de la hora */}
+              <td className="border bg-gray-50 text-xs text-center font-medium">{formatoHora(hora)}</td>
+              {/* Celdas correspondientes a cada día */}
               {diasSemana.map((dia) => {
-                const materia = materias.find((m) =>
-                  m.dias.includes(dia) &&
-                  parseInt(m.horaInicio.split(':')[0]) <= hora &&
-                  parseInt(m.horaFin.split(':')[0]) > hora
-                );
+                // Clave única para cada celda en función del día y la hora
+                const cellKey = `${dia}-${hora}`;
+                // Si la celda ya está ocupada, no la renderizamos
+                if (celdasOcupadas.has(cellKey)) return null;
 
-                if (!materia) {
-                  return <td key={dia + hora} className="border border-gray-200 h-16"></td>;
+                let foundMateria: Materia | undefined;
+                let foundSesion: Sesion | undefined;
+
+                // Buscamos si hay una materia y sesión correspondiente a esta hora y día
+                for (const materia of materiasMock) {
+                  const sesion = materia.sesiones.find(s =>
+                    s.dia === dia &&
+                    parseInt(s.horaInicio.split(':')[0]) === hora
+                  );
+                  if (sesion) {
+                    foundMateria = materia;
+                    foundSesion = sesion;
+                    break;
+                  }
                 }
 
-                if (!materiaEmpiezaEnHora(materia, hora)) return null;
+                // Si no se encuentra una sesión, devolvemos una celda vacía
+                if (!foundMateria || !foundSesion) {
+                  return <td key={cellKey} className="border h-16"></td>;
+                }
 
-                const horaInicio = parseInt(materia.horaInicio.split(':')[0]);
-                const horaFin = parseInt(materia.horaFin.split(':')[0]);
+                // Calculamos la duración de la sesión
+                const horaInicio = parseInt(foundSesion.horaInicio.split(':')[0]);
+                const horaFin = parseInt(foundSesion.horaFin.split(':')[0]);
                 const duracion = horaFin - horaInicio;
 
-                const claseFondo = colorPorMateria[materia.id];
+                // Marcar las celdas que serán ocupadas por esta materia
+                for (let i = 0; i < duracion; i++) {
+                  celdasOcupadas.add(`${dia}-${hora + i}`);
+                }
 
+                // Renderizamos la celda con la información de la materia
                 return (
                   <td
-                    key={dia + hora}
-                    rowSpan={duracion}
-                    className={`border text-sm text-center align-top px-2 py-1 font-medium ${claseFondo}`}
+                    key={cellKey}
+                    rowSpan={duracion}  // Esta celda ocupa varias filas si la sesión dura más de una hora
+                    className={`border p-2 text-sm align-top text-center ${colorPorCodigo[foundMateria.codigo]}`}
                   >
-                    <div>{materia.nombre}</div>
-                    <div className="text-xs text-gray-700">{materia.salon}</div>
+                    {/* Información de la materia */}
+                    <div className="font-semibold">{foundMateria.nombre}</div>
+                    <div className="text-xs">{foundSesion.salon}</div>
+                    <div className="text-xs italic">{foundMateria.profesor}</div>
+                    <div className="text-xs">{foundMateria.grupo}</div>
                   </td>
                 );
               })}
